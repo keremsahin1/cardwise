@@ -17,10 +17,13 @@ chromium.use(StealthPlugin());
 
 const sources = {
   discover: require('./sources/discover'),
-  'chase-cards': require('./sources/chase-cards'), // discovers all Chase cards + extracts benefits
+  'chase-cards': require('./sources/chase-cards'),
+  'amex-cards': require('./sources/amex-cards'),       // requires headless:false
+  'capitalone-cards': require('./sources/capitalone-cards'),
+  'citi-cards': require('./sources/citi-cards'),
+  'citi-custom-cash': require('./sources/citi-custom-cash'),
   'usbank-cash-plus': require('./sources/usbank-cash-plus'),
   'bofa-customized-cash': require('./sources/bofa-customized-cash'),
-  'citi-custom-cash': require('./sources/citi-custom-cash'),
 };
 
 const LOG_FILE = require('path').join(__dirname, '..', 'crawler.log');
@@ -43,10 +46,13 @@ async function run() {
 
   log(`Starting crawler (sources: ${Object.keys(toRun).join(', ')})`);
 
+  // Amex blocks headless browsers — run visible if amex-cards is in the list
+  const needsHeadful = Object.keys(toRun).includes('amex-cards');
   const browser = await chromium.launch({
-    headless: true,
+    headless: !needsHeadful,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
+  if (needsHeadful) log('⚠️  Running in visible browser mode (required for Amex)');
 
   let totalUpdated = 0;
 
