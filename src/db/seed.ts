@@ -54,7 +54,7 @@ export async function seedDatabase() {
     { name: 'Citi Double Cash', issuer: 'Citi', base_rate: 2.0, reward_type: 'cashback', points_value: 1.0, color: '#e31837' },
     { name: 'Citi Custom Cash', issuer: 'Citi', base_rate: 1.0, reward_type: 'cashback', points_value: 1.0, color: '#e31837' },
     { name: 'Discover it Cash Back', issuer: 'Discover', base_rate: 1.0, reward_type: 'cashback', points_value: 1.0, color: '#f76f20' },
-    { name: 'Capital One Venture X', issuer: 'Capital One', base_rate: 2.0, reward_type: 'points', points_value: 1.7, color: '#004977' },
+    { name: 'Capital One Venture X', issuer: 'Capital One', base_rate: 2.0, reward_type: 'points', points_value: 1.85, color: '#004977' },
     { name: 'Capital One Savor Cash Rewards', issuer: 'Capital One', base_rate: 1.0, reward_type: 'cashback', points_value: 1.0, color: '#004977' },
     { name: 'Amazon Prime Visa', issuer: 'Chase', base_rate: 1.0, reward_type: 'cashback', points_value: 1.0, color: '#ff9900' },
     { name: 'Apple Card', issuer: 'Goldman Sachs', base_rate: 1.0, reward_type: 'cashback', points_value: 1.0, color: '#555555' },

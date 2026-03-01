@@ -150,6 +150,12 @@ export default function Home() {
     return `${rec.rate}% cash back`;
   };
 
+  const formatEffectiveValue = (rec: Recommendation) => {
+    if (rec.rewardType !== 'points') return null;
+    const effective = rec.effectiveRate.toFixed(1).replace(/\.0$/, '');
+    return `~${effective}% value`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
@@ -358,6 +364,9 @@ export default function Home() {
                     <div className="text-xl font-bold" style={{ color: idx === 0 ? '#818cf8' : '#94a3b8' }}>
                       {formatReward(rec)}
                     </div>
+                    {formatEffectiveValue(rec) && (
+                      <div className="text-xs font-medium text-emerald-400">{formatEffectiveValue(rec)}</div>
+                    )}
                     {rec.category && (
                       <div className="text-xs text-slate-500">{rec.category}</div>
                     )}
@@ -388,6 +397,12 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {recommendations && recommendations.length > 0 && recommendations.some(r => r.rewardType === 'points') && (
+          <div className="mt-4 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-500">
+            💡 Points value estimated using industry-standard valuations (Chase UR: 2¢, Amex MR: 2¢, Capital One: 1.85¢). Actual value varies by redemption method.
           </div>
         )}
 
