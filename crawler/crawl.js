@@ -46,36 +46,39 @@ async function run() {
 
   log(`Starting crawler (sources: ${Object.keys(toRun).join(', ')})`);
 
-  // Amex blocks headless browsers — run visible if amex-cards is in the list
-  const needsHeadful = Object.keys(toRun).includes('amex-cards');
-  const browser = await chromium.launch({
-    headless: !needsHeadful,
-    args: ['--no-sandbox', '--disable-dev-shm-usage'],
-  });
-  if (needsHeadful) log('⚠️  Running in visible browser mode (required for Amex)');
-
+  const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
   let totalUpdated = 0;
 
-  try {
-    const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    });
-    const page = await context.newPage();
+  // Separate headful sources (Amex blocks headless) from headless ones
+  const headfulSources = ['amex-cards'];
+  const headlessSources = Object.entries(toRun).filter(([n]) => !headfulSources.includes(n));
+  const headfulOnly = Object.entries(toRun).filter(([n]) => headfulSources.includes(n));
 
-    for (const [name, source] of Object.entries(toRun)) {
-      try {
-        log(`Running source: ${name}`);
-        const count = await source.crawl(page);
-        totalUpdated += count;
-        log(`${name}: ${count} benefits updated`);
-      } catch (err) {
-        log(`❌ ${name} failed: ${err.message}`);
+  async function runSources(entries, headless) {
+    if (!entries.length) return;
+    const browser = await chromium.launch({ headless, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+    if (!headless) log('⚠️  Running in visible browser mode (required for Amex)');
+    try {
+      const context = await browser.newContext({ userAgent: UA });
+      const page = await context.newPage();
+      for (const [name, source] of entries) {
+        try {
+          log(`Running source: ${name}`);
+          const count = await source.crawl(page);
+          totalUpdated += count;
+          log(`${name}: ${count} benefits updated`);
+        } catch (err) {
+          log(`❌ ${name} failed: ${err.message}`);
+        }
+        await page.waitForTimeout(1000);
       }
-      await page.waitForTimeout(1000);
+    } finally {
+      await browser.close();
     }
-  } finally {
-    await browser.close();
   }
+
+  await runSources(headlessSources, true);
+  await runSources(headfulOnly, false);
 
   log(`✅ Crawler done. ${totalUpdated} benefits updated total.`);
 }
