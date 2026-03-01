@@ -5,7 +5,7 @@ node_modules/
 .next/
 out/
 
-# database (local data)
+# database (local SQLite — not used in production)
 data.db
 *.db
 *.db-shm
@@ -21,3 +21,4 @@ data.db
 
 # logs
 *.log
+.vercel
