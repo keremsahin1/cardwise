@@ -55,11 +55,19 @@ function initSchema(db: Database.Database) {
       requires_activation INTEGER DEFAULT 0
     );
 
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT,
+      image TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS user_cards (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      session_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       card_id INTEGER NOT NULL REFERENCES cards(id),
-      UNIQUE(session_id, card_id)
+      UNIQUE(user_id, card_id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_card_benefits_card ON card_benefits(card_id);

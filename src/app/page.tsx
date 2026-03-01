@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, CreditCard, X, ChevronDown, Star, AlertCircle, Clock } from 'lucide-react';
+import { Search, CreditCard, X, ChevronDown, Star, AlertCircle, Clock, LogIn, LogOut } from 'lucide-react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 interface Card {
   id: number;
@@ -48,6 +49,7 @@ interface Merchant {
 }
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [cardSearch, setCardSearch] = useState('');
@@ -61,10 +63,21 @@ export default function Home() {
   const merchantRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Load all cards
   useEffect(() => {
     fetch('/api/cards').then(r => r.json()).then(setAllCards);
   }, []);
 
+  // Load saved cards when signed in
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/user/cards').then(r => r.json()).then((saved: Card[]) => {
+        if (Array.isArray(saved) && saved.length > 0) setSelectedCards(saved);
+      });
+    }
+  }, [session]);
+
+  // Merchant autocomplete
   useEffect(() => {
     if (merchantQuery.length < 1) { setMerchantSuggestions([]); return; }
     const t = setTimeout(() => {
@@ -74,6 +87,7 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [merchantQuery]);
 
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (merchantRef.current && !merchantRef.current.contains(e.target as Node)) setShowMerchantDropdown(false);
@@ -89,15 +103,29 @@ export default function Home() {
      c.issuer.toLowerCase().includes(cardSearch.toLowerCase()))
   );
 
-  const addCard = (card: Card) => {
+  const addCard = async (card: Card) => {
     setSelectedCards(p => [...p, card]);
     setCardSearch('');
     setShowCardDropdown(false);
+    if (session?.user) {
+      await fetch('/api/user/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId: card.id }),
+      });
+    }
   };
 
-  const removeCard = (id: number) => {
+  const removeCard = async (id: number) => {
     setSelectedCards(p => p.filter(c => c.id !== id));
     setRecommendations(null);
+    if (session?.user) {
+      await fetch('/api/user/cards', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId: id }),
+      });
+    }
   };
 
   const getRecommendations = async () => {
@@ -122,26 +150,67 @@ export default function Home() {
     return `${rec.rate}% cash back`;
   };
 
-  const bestCard = recommendations?.[0];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-indigo-500/20 rounded-2xl mb-4">
-            <CreditCard className="w-7 h-7 text-indigo-400" />
+        <div className="flex items-start justify-between mb-10">
+          <div className="flex-1 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-indigo-500/20 rounded-2xl mb-4">
+              <CreditCard className="w-7 h-7 text-indigo-400" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">CardWise</h1>
+            <p className="text-slate-400 text-sm">Find the best card to use at any store</p>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Card Optimizer</h1>
-          <p className="text-slate-400 text-sm">Find the best card to use at any store</p>
+
+          {/* Auth button */}
+          <div className="absolute top-8 right-8">
+            {status === 'loading' ? null : session ? (
+              <div className="flex items-center gap-3">
+                {session.user?.image && (
+                  <img src={session.user.image} alt="" className="w-8 h-8 rounded-full" />
+                )}
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-medium">{session.user?.name?.split(' ')[0]}</div>
+                  <button
+                    onClick={() => signOut()}
+                    className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+                  >
+                    <LogOut className="w-3 h-3" /> Sign out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => signIn('google')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-sm font-medium transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign in with Google
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Signed-in save banner */}
+        {!session && status !== 'loading' && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-sm text-indigo-300">
+            <LogIn className="w-4 h-4 shrink-0" />
+            <span>
+              <button onClick={() => signIn('google')} className="underline font-medium">Sign in with Google</button>
+              {' '}to save your wallet — no more re-entering cards each time.
+            </span>
+          </div>
+        )}
 
         {/* Card selector */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-slate-300 mb-2">Your Cards</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Your Cards
+            {session && <span className="ml-2 text-xs text-indigo-400 font-normal">✓ saved to your account</span>}
+          </label>
 
-          {/* Selected cards */}
           {selectedCards.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
               {selectedCards.map(card => (
@@ -160,10 +229,11 @@ export default function Home() {
             </div>
           )}
 
-          {/* Card search dropdown */}
           <div ref={cardRef} className="relative">
-            <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 cursor-text"
-              onClick={() => setShowCardDropdown(true)}>
+            <div
+              className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 cursor-text"
+              onClick={() => setShowCardDropdown(true)}
+            >
               <Search className="w-4 h-4 text-slate-500 shrink-0" />
               <input
                 className="bg-transparent outline-none text-sm w-full placeholder-slate-500"
@@ -272,8 +342,10 @@ export default function Home() {
 
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: rec.color + '22', borderWidth: 1, borderColor: rec.color + '44' }}>
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: rec.color + '22', borderWidth: 1, borderColor: rec.color + '44' }}
+                    >
                       <CreditCard className="w-5 h-5" style={{ color: rec.color }} />
                     </div>
                     <div>
@@ -292,7 +364,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Warnings & notes */}
                 <div className="mt-3 space-y-1.5">
                   {rec.requiresActivation && (
                     <div className="flex items-center gap-1.5 text-xs text-amber-400">
