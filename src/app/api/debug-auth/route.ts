@@ -36,7 +36,10 @@ export async function GET() {
   // Check env vars (redacted)
   results.env = {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL ?? 'missing',
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? 'set' : 'missing',
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? `set (len=${process.env.NEXTAUTH_SECRET.length}, endsNewline=${process.env.NEXTAUTH_SECRET.endsWith('\n')})` : 'missing',
+    NEXTAUTH_URL_endsNewline: process.env.NEXTAUTH_URL?.endsWith('\n'),
+    GOOGLE_CLIENT_ID_endsNewline: process.env.GOOGLE_CLIENT_ID?.endsWith('\n'),
+    GOOGLE_CLIENT_SECRET_endsNewline: process.env.GOOGLE_CLIENT_SECRET?.endsWith('\n'),
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.slice(-10) : 'missing',
     DATABASE_URL: process.env.DATABASE_URL ? 'set' : 'missing',
   };
