@@ -1,7 +1,6 @@
 {
   "name": "pickthebestcard",
   "private": true,
-  "workspaces": ["web", "mobile"],
   "scripts": {
     "web": "cd web && npm run dev",
     "mobile": "cd mobile && npx expo start"
