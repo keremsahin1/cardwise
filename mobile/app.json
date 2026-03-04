@@ -13,7 +13,7 @@
       "backgroundColor": "#0f172a"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.pickthebestcard.app",
       "infoPlist": {
         "CFBundleURLTypes": [
