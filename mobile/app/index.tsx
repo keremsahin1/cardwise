@@ -189,7 +189,7 @@ export default function HomeScreen() {
           placeholderTextColor="#64748b"
           value={cardSearch}
           onChangeText={t => { setCardSearch(t); setShowCardDropdown(true); }}
-          onFocus={() => setShowCardDropdown(true)}
+          onFocus={() => { setShowMerchantDropdown(false); setShowCardDropdown(true); }}
         />
         {showCardDropdown && filteredCards.length > 0 && (
           <View style={s.dropdown}>
@@ -220,7 +220,7 @@ export default function HomeScreen() {
             setRecommendations(null);
             setShowCategoryPicker(false);
           }}
-          onFocus={() => setShowMerchantDropdown(true)}
+          onFocus={() => { setShowCardDropdown(false); setShowMerchantDropdown(true); }}
           returnKeyType="search"
           onSubmitEditing={() => findBestCard()}
         />
