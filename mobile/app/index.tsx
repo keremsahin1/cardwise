@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, StyleSheet, Alert, Image, Pressable, Keyboard
+  ScrollView, ActivityIndicator, StyleSheet, Alert, Image, Keyboard, Linking
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -285,14 +285,17 @@ export default function HomeScreen() {
 
           {recommendations.map((rec, idx) => (
             <View key={rec.cardId} style={[s.recCard, idx === 0 && s.recCardBest]}>
+              {/* Colored left bar */}
+              <View style={[s.recColorBar, { backgroundColor: rec.color }]} />
+
               {idx === 0 && (
                 <View style={s.bestBadge}>
                   <Text style={s.bestBadgeText}>⭐ Best Choice</Text>
                 </View>
               )}
               <View style={s.recRow}>
-                <View style={[s.recIcon, { backgroundColor: rec.color + '22', borderColor: rec.color + '44' }]}>
-                  <Text style={{ color: rec.color, fontSize: 18 }}>💳</Text>
+                <View style={[s.recIcon, { backgroundColor: rec.color + '22', borderColor: rec.color + '55' }]}>
+                  <Text style={{ fontSize: 16 }}>💳</Text>
                 </View>
                 <View style={s.recInfo}>
                   <Text style={s.recName}>{rec.cardName}</Text>
@@ -320,6 +323,11 @@ export default function HomeScreen() {
                 <Text style={s.notice}>
                   🔄 Valid until {new Date(rec.validUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </Text>
+              )}
+              {rec.benefitsUrl && (
+                <TouchableOpacity onPress={() => Linking.openURL(rec.benefitsUrl!)}>
+                  <Text style={s.benefitsLink}>↗ View official benefits</Text>
+                </TouchableOpacity>
               )}
             </View>
           ))}
@@ -401,14 +409,18 @@ const s = StyleSheet.create({
   resultsSub: { color: '#64748b' },
   recCard: {
     backgroundColor: '#1e293b', borderRadius: 16, borderWidth: 1,
-    borderColor: '#334155', padding: 14, marginBottom: 10,
+    borderColor: '#334155', padding: 14, marginBottom: 10, overflow: 'hidden',
   },
   recCardBest: { borderColor: '#6366f188', backgroundColor: '#6366f111' },
+  recColorBar: {
+    position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, borderRadius: 3,
+  },
   bestBadge: {
     backgroundColor: '#4f46e5', borderRadius: 20, alignSelf: 'flex-start',
     paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8,
   },
   bestBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  benefitsLink: { color: '#6366f1', fontSize: 11, marginTop: 6 },
   recRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   recIcon: {
     width: 40, height: 40, borderRadius: 10, alignItems: 'center',
