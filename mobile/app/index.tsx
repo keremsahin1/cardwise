@@ -1,11 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, ActivityIndicator, StyleSheet, Alert, Image
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from 'expo-router';
-import { fetchCards, fetchCategories, searchMerchants, getRecommendations } from '../lib/api';
+
+import { fetchCards, fetchCategories, searchMerchants, getRecommendations, fetchUserCards, saveUserCard, deleteUserCard } from '../lib/api';
 import type { Card, Merchant, Category, Recommendation, MerchantMatch } from '../lib/api';
 import { configureGoogleSignIn, signInWithGoogle, signOutGoogle, loadUser } from '../lib/auth';
 import type { User } from '../lib/auth';
@@ -36,22 +36,27 @@ export default function HomeScreen() {
   useEffect(() => {
     fetchCards().then(setAllCards);
     fetchCategories().then(setCategories);
-    loadUser().then(setUser);
+    loadUser().then(u => {
+      setUser(u);
+      if (u?.accessToken) {
+        // Load saved cards from DB
+        fetchUserCards(u.accessToken).then(cards => {
+          if (cards.length > 0) setSelectedCards(cards);
+        });
+      } else {
+        // Fall back to local storage
+        AsyncStorage.getItem(SAVED_CARDS_KEY).then(val => {
+          if (val) setSelectedCards(JSON.parse(val));
+        });
+      }
+    });
   }, []);
 
 
 
-  // Load saved cards from storage
-  useFocusEffect(useCallback(() => {
-    AsyncStorage.getItem(SAVED_CARDS_KEY).then(val => {
-      if (val) setSelectedCards(JSON.parse(val));
-    });
-  }, []));
 
-  // Save cards to storage when changed
-  useEffect(() => {
-    AsyncStorage.setItem(SAVED_CARDS_KEY, JSON.stringify(selectedCards));
-  }, [selectedCards]);
+
+
 
   // Merchant autocomplete
   useEffect(() => {
@@ -71,11 +76,16 @@ export default function HomeScreen() {
     setSelectedCards(p => [...p, card]);
     setCardSearch('');
     setShowCardDropdown(false);
+    if (user?.accessToken) saveUserCard(user.accessToken, card.id);
+    else AsyncStorage.setItem(SAVED_CARDS_KEY, JSON.stringify([...selectedCards, card]));
   };
 
   const removeCard = (id: number) => {
-    setSelectedCards(p => p.filter(c => c.id !== id));
+    const updated = selectedCards.filter(c => c.id !== id);
+    setSelectedCards(updated);
     setRecommendations(null);
+    if (user?.accessToken) deleteUserCard(user.accessToken, id);
+    else AsyncStorage.setItem(SAVED_CARDS_KEY, JSON.stringify(updated));
   };
 
   const findBestCard = async (overrideCategoryId?: number | null) => {
@@ -135,7 +145,16 @@ export default function HomeScreen() {
           ) : (
             <TouchableOpacity
               style={s.signInBtn}
-              onPress={() => signInWithGoogle().then(u => { if (u) setUser(u); })}
+              onPress={() => signInWithGoogle().then(u => {
+                if (u) {
+                  setUser(u);
+                  if (u.accessToken) {
+                    fetchUserCards(u.accessToken).then(cards => {
+                      if (cards.length > 0) setSelectedCards(cards);
+                    });
+                  }
+                }
+              })}
             >
               <Text style={s.signInText}>Sign in</Text>
             </TouchableOpacity>

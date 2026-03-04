@@ -8,6 +8,7 @@ export interface User {
   email: string;
   name: string;
   picture: string;
+  accessToken?: string;
 }
 
 export function configureGoogleSignIn() {
@@ -20,11 +21,13 @@ export async function signInWithGoogle(): Promise<User | null> {
   try {
     await GoogleSignin.hasPlayServices();
     const userInfo = await GoogleSignin.signIn();
+    const tokens = await GoogleSignin.getTokens();
     const user: User = {
       id: userInfo.data?.user.id ?? '',
       email: userInfo.data?.user.email ?? '',
       name: userInfo.data?.user.name ?? '',
       picture: userInfo.data?.user.photo ?? '',
+      accessToken: tokens.accessToken,
     };
     await saveUser(user);
     return user;

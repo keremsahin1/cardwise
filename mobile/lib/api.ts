@@ -56,6 +56,29 @@ export async function fetchCards(): Promise<Card[]> {
   return res.json();
 }
 
+export async function fetchUserCards(accessToken: string): Promise<Card[]> {
+  const res = await fetch(`${BASE_URL}/api/mobile/cards`, {
+    headers: { 'x-google-token': accessToken },
+  });
+  return res.json();
+}
+
+export async function saveUserCard(accessToken: string, cardId: number): Promise<void> {
+  await fetch(`${BASE_URL}/api/mobile/cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-google-token': accessToken },
+    body: JSON.stringify({ cardId }),
+  });
+}
+
+export async function deleteUserCard(accessToken: string, cardId: number): Promise<void> {
+  await fetch(`${BASE_URL}/api/mobile/cards`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', 'x-google-token': accessToken },
+    body: JSON.stringify({ cardId }),
+  });
+}
+
 export async function fetchCategories(): Promise<Category[]> {
   const res = await fetch(`${BASE_URL}/api/categories`);
   return res.json();
