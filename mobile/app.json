@@ -20,9 +20,11 @@
           {
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7"
-            ]
+            ],
+            "CFBundleURLName": "google"
           }
-        ]
+        ],
+        "GIDClientID": "517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7.apps.googleusercontent.com"
       }
     },
     "android": {
