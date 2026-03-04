@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
-  });
+  }, { scheme: 'com.googleusercontent.apps.517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7' });
 
   // Load cards and categories
   useEffect(() => {

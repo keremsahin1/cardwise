@@ -2,6 +2,7 @@
   "expo": {
     "name": "Pick The Best Card",
     "slug": "pickthebestcard",
+    "scheme": "com.googleusercontent.apps.517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
