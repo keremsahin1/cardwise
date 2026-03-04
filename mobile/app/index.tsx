@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  ScrollView, ActivityIndicator, StyleSheet, Alert, Image, Keyboard, Linking
+  ScrollView, ActivityIndicator, StyleSheet, Alert, Image, Keyboard, Linking, ActionSheetIOS
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -142,7 +142,23 @@ export default function HomeScreen() {
             <Text style={s.headerSub}>Find the best card for any store</Text>
           </View>
           {user ? (
-            <TouchableOpacity style={s.userBtn} onPress={() => signOutGoogle().then(() => setUser(null))}>
+            <TouchableOpacity
+              style={s.userBtn}
+              onPress={() => {
+                ActionSheetIOS.showActionSheetWithOptions(
+                  {
+                    title: user.name,
+                    message: user.email,
+                    options: ['Sign Out', 'Cancel'],
+                    destructiveButtonIndex: 0,
+                    cancelButtonIndex: 1,
+                  },
+                  idx => {
+                    if (idx === 0) signOutGoogle().then(() => setUser(null));
+                  }
+                );
+              }}
+            >
               {user.picture
                 ? <Image source={{ uri: user.picture }} style={s.avatar} />
                 : <Text style={s.avatarInitial}>{user.name?.[0] ?? '?'}</Text>
