@@ -2,7 +2,8 @@
 
 > Never leave rewards on the table. Pick The Best Card tells you exactly which credit card to use at any store.
 
-🌐 **Live at [pickthebestcard.com](https://pickthebestcard.com)**
+🌐 **Live at [pickthebestcard.com](https://pickthebestcard.com)**  
+📱 **iOS App** — submitted to the App Store
 
 ## The Problem
 
@@ -12,63 +13,72 @@ Pick The Best Card solves this with a simple question: **where are you shopping?
 
 ## Features
 
-- 🔍 **Search any store** — 200+ merchants preloaded across all categories
+- 🔍 **Search any store** — 500+ merchants preloaded across 27 categories
 - 💳 **Your wallet** — add the cards you actually own
 - 🏆 **Instant ranked recommendations** — best card at the top, every time
 - 🔄 **Rotating category support** — Discover 5%, Chase Freedom Flex, and others tracked with active dates
-- 💰 **Points valuation** — converts points to real dollar value (e.g. 3x Chase UR = ~6%)
+- 💰 **Points valuation** — converts points to real dollar value (e.g. 3x Chase UR ≈ 6¢)
 - 🔗 **Official benefit links** — links to each card's official benefits page
+- 🌐 **Online vs. in-store** — distinguishes online-only benefits
+- 📱 **iOS app** — full native app with Google Sign-In and card sync
+
+## Monorepo Structure
+
+```
+pickthebestcard/
+├── web/          # Next.js web app (deployed to Vercel)
+└── mobile/       # Expo React Native iOS app
+```
 
 ## Stack
 
-- **Framework**: Next.js 14 (App Router)
+### Web (`web/`)
+- **Framework**: Next.js (App Router)
 - **Auth**: NextAuth v4 with Google Sign-In
 - **Database**: Neon Postgres (serverless)
 - **Styling**: Tailwind CSS
-- **Deployment**: Vercel
-- **Crawler**: Playwright + GPT-4o-mini (official issuer pages only)
+- **Analytics**: Vercel Analytics + Speed Insights
+- **Deployment**: Vercel (root directory: `web/`)
+
+### Mobile (`mobile/`)
+- **Framework**: Expo + React Native (Expo Router)
+- **Auth**: `@react-native-google-signin/google-signin` (native)
+- **Card sync**: Custom `/api/mobile/cards` endpoint (Google token auth)
+- **Platform**: iOS only
 
 ## Cards Supported
 
 80+ cards across all major issuers:
-- **Chase** — 40 cards (Sapphire, Freedom, Ink, co-branded)
-- **American Express** — 14 cards (Platinum, Gold, Delta, Hilton, Marriott)
-- **Capital One** — 12 cards (Venture X, Savor, Quicksilver)
-- **Citi** — 7 cards (Double Cash, Strata Premier, Custom Cash, Costco)
+- **Chase** — Sapphire, Freedom, Ink, co-branded
+- **American Express** — Platinum, Gold, Delta, Hilton, Marriott
+- **Capital One** — Venture X, Savor, Quicksilver
+- **Citi** — Double Cash, Strata Premier, Custom Cash, Costco
 - **Discover, US Bank, Bank of America, Wells Fargo** — key cards
-
-## Benefit Crawler
-
-Benefits are crawled weekly from **official card issuer pages only** — no aggregators.
-
-```bash
-cd crawler
-npm install
-node crawl.js                    # crawl all sources
-node crawl.js chase-cards        # single issuer
-node crawl.js amex-cards         # opens visible browser (Amex blocks headless)
-```
-
-Sources: Chase, Amex, Capital One, Citi, Discover, US Bank, BofA
 
 ## Local Development
 
+### Web
 ```bash
-# 1. Clone and install
 git clone https://github.com/keremsahin1/pickthebestcard.git
-cd pickthebestcard
+cd pickthebestcard/web
 npm install
-
-# 2. Set up env
 cp .env.example .env.local
 # Fill in: DATABASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_SECRET, NEXTAUTH_URL
-
-# 3. Run dev server
-npm run dev -- --port 3001
+npm run dev
 ```
+
+### Mobile
+```bash
+cd pickthebestcard/mobile
+npm install
+npx expo run:ios
+```
+
+> **Note:** The `ios/` folder is gitignored (Expo managed workflow). Run `npx expo prebuild --clean` to regenerate it. Google Sign-In requires a physical device or simulator with the native build — Expo Go is not supported.
 
 ## Environment Variables
 
+### Web (`web/.env.local`)
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | Neon Postgres connection string |
@@ -76,4 +86,10 @@ npm run dev -- --port 3001
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `NEXTAUTH_SECRET` | Random secret for session signing |
 | `NEXTAUTH_URL` | Your deployment URL |
-| `OPENAI_API_KEY` | For LLM-assisted benefit extraction in crawler |
+
+## Deployment
+
+- **Web**: Push to `main` → Vercel auto-deploys (root directory: `web/`)
+- **iOS**: Archive via Xcode → upload to App Store Connect
+  - Set `ENABLE_USER_SCRIPT_SANDBOXING = No` in Xcode Build Settings to fix sandbox errors
+  - Run `npx expo prebuild --clean` before archiving after any config changes
