@@ -5,18 +5,12 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
 import { fetchCards, fetchCategories, searchMerchants, getRecommendations } from '../lib/api';
 import type { Card, Merchant, Category, Recommendation, MerchantMatch } from '../lib/api';
-import { fetchGoogleUser, saveUser, loadUser, clearUser } from '../lib/auth';
+import { configureGoogleSignIn, signInWithGoogle, signOutGoogle, loadUser } from '../lib/auth';
 import type { User } from '../lib/auth';
 
-WebBrowser.maybeCompleteAuthSession();
-
-// Replace with your iOS client ID from Google Cloud Console
-const GOOGLE_IOS_CLIENT_ID = '517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7.apps.googleusercontent.com';
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+configureGoogleSignIn();
 
 const SAVED_CARDS_KEY = 'saved_cards';
 
@@ -38,11 +32,6 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
-    webClientId: GOOGLE_WEB_CLIENT_ID,
-  }, { scheme: 'com.googleusercontent.apps.517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7' });
-
   // Load cards and categories
   useEffect(() => {
     fetchCards().then(setAllCards);
@@ -50,18 +39,7 @@ export default function HomeScreen() {
     loadUser().then(setUser);
   }, []);
 
-  // Handle Google sign-in response
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const token = response.authentication?.accessToken;
-      if (token) {
-        fetchGoogleUser(token).then(u => {
-          saveUser(u);
-          setUser(u);
-        });
-      }
-    }
-  }, [response]);
+
 
   // Load saved cards from storage
   useFocusEffect(useCallback(() => {
@@ -148,7 +126,7 @@ export default function HomeScreen() {
             <Text style={s.headerSub}>Find the best card for any store</Text>
           </View>
           {user ? (
-            <TouchableOpacity style={s.userBtn} onPress={() => { clearUser(); setUser(null); }}>
+            <TouchableOpacity style={s.userBtn} onPress={() => signOutGoogle().then(() => setUser(null))}>
               {user.picture
                 ? <Image source={{ uri: user.picture }} style={s.avatar} />
                 : <Text style={s.avatarInitial}>{user.name?.[0] ?? '?'}</Text>
@@ -157,8 +135,7 @@ export default function HomeScreen() {
           ) : (
             <TouchableOpacity
               style={s.signInBtn}
-              onPress={() => promptAsync()}
-              disabled={!request}
+              onPress={() => signInWithGoogle().then(u => { if (u) setUser(u); })}
             >
               <Text style={s.signInText}>Sign in</Text>
             </TouchableOpacity>

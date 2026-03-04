@@ -1,8 +1,5 @@
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-WebBrowser.maybeCompleteAuthSession();
 
 export const USER_KEY = 'user_session';
 
@@ -13,11 +10,33 @@ export interface User {
   picture: string;
 }
 
-export async function fetchGoogleUser(accessToken: string): Promise<User> {
-  const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-    headers: { Authorization: `Bearer ${accessToken}` },
+export function configureGoogleSignIn() {
+  GoogleSignin.configure({
+    iosClientId: '517026320231-5qj1rochv8lr6qj3k98q6qh2p6nahhb7.apps.googleusercontent.com',
   });
-  return res.json();
+}
+
+export async function signInWithGoogle(): Promise<User | null> {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const userInfo = await GoogleSignin.signIn();
+    const user: User = {
+      id: userInfo.data?.user.id ?? '',
+      email: userInfo.data?.user.email ?? '',
+      name: userInfo.data?.user.name ?? '',
+      picture: userInfo.data?.user.photo ?? '',
+    };
+    await saveUser(user);
+    return user;
+  } catch (error: any) {
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) return null;
+    throw error;
+  }
+}
+
+export async function signOutGoogle() {
+  await GoogleSignin.signOut();
+  await clearUser();
 }
 
 export async function saveUser(user: User) {
