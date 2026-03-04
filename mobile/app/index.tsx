@@ -154,7 +154,7 @@ export default function HomeScreen() {
                     cancelButtonIndex: 1,
                   },
                   idx => {
-                    if (idx === 0) signOutGoogle().then(() => setUser(null));
+                    if (idx === 0) signOutGoogle().then(() => { setUser(null); setSelectedCards([]); setRecommendations(null); });
                   }
                 );
               }}
