@@ -191,15 +191,14 @@ export default function Home() {
       <div className="max-w-2xl mx-auto px-4 py-12">
 
         {/* Header */}
-        <div className="flex items-start justify-between mb-10">
-          <div className="flex-1 text-center">
-
-            <h1 className="text-3xl font-bold mb-2">💳 Pick The Best Card</h1>
+        <div className="flex items-center justify-between gap-3 mb-10">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1">💳 Pick The Best Card</h1>
             <p className="text-slate-400 text-sm">Find the best card to use at any store</p>
           </div>
 
           {/* Auth button */}
-          <div className="absolute top-8 right-8">
+          <div className="shrink-0">
             {status === 'loading' ? null : session ? (
               <div className="flex items-center gap-3">
                 {session.user?.image && (
