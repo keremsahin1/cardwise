@@ -124,7 +124,7 @@ Extract ONLY these two protection types if present:
 
 For each protection found, return JSON with:
 - protectionType: "car_rental_insurance" or "extended_warranty"
-- coverageDetails: string describing the coverage. IMPORTANT: always start with "Primary coverage" or "Secondary coverage" based on the text. If the page says coverage applies without needing your own personal auto insurance first, it's primary. If it says coverage kicks in after your own insurance, it's secondary. If the page doesn't specify, use context clues (premium travel cards like Sapphire Reserve are typically primary). Always include coverage limits if mentioned (e.g. "Primary coverage up to $75,000").
+- coverageDetails: copy the EXACT sentence(s) from the page describing the coverage. Do not summarize or paraphrase. Include the full description as it appears on the page (e.g. "Coverage is primary and provides reimbursement up to $75,000 for theft and collision damage for most rental vehicles in the U.S. and abroad"). The word "primary" or "secondary" must appear in this text if it is mentioned on the page.
 - notes: string with any important conditions/caveats, or null (e.g. "Must decline rental company CDW", "Original warranty must be 3 years or less")
 
 Return ONLY a JSON array, no explanation. If neither protection is found, return [].
