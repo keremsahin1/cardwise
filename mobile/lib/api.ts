@@ -1,3 +1,6 @@
+import type { Recommendation, Protection, MerchantMatch, Merchant, Category } from '@pickthebestcard/shared';
+export type { Recommendation, Protection, MerchantMatch, Merchant, Category };
+
 const BASE_URL = 'https://pickthebestcard.com';
 
 export interface Card {
@@ -8,59 +11,6 @@ export interface Card {
   reward_type: string;
   points_value: number;
   color: string;
-}
-
-export interface Merchant {
-  id: number;
-  name: string;
-  category_name: string;
-  category_icon: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  icon: string;
-}
-
-export interface Recommendation {
-  cardId: number;
-  cardName: string;
-  issuer: string;
-  color: string;
-  rate: number;
-  effectiveRate: number;
-  benefitType: string;
-  rewardType: string;
-  category: string | null;
-  notes: string | null;
-  spendCap: number | null;
-  capPeriod: string | null;
-  requiresActivation: boolean;
-  validUntil: string | null;
-  isRotating: boolean;
-  baseRate: number;
-  benefitsUrl: string | null;
-}
-
-export interface MerchantMatch {
-  merchantId: number | null;
-  merchantName: string;
-  categoryId: number | null;
-  categoryName: string | null;
-  isOnline: boolean;
-}
-
-export interface Protection {
-  cardId: number;
-  cardName: string;
-  issuer: string;
-  color: string;
-  protectionType: 'car_rental_insurance' | 'extended_warranty';
-  coverageDetails: string;
-  coverageTier: 'primary' | 'secondary' | 'unknown';
-  notes: string | null;
-  benefitsUrl: string | null;
 }
 
 export async function fetchCards(): Promise<Card[]> {

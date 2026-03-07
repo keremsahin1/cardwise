@@ -6,7 +6,9 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { fetchCards, fetchCategories, searchMerchants, getRecommendations, fetchUserCards, saveUserCard, deleteUserCard } from '../lib/api';
-import type { Card, Merchant, Category, Recommendation, MerchantMatch, Protection } from '../lib/api';
+import type { Card, Merchant, Category } from '../lib/api';
+import { formatReward, sortProtections } from '@pickthebestcard/shared';
+import type { Recommendation, MerchantMatch, Protection } from '@pickthebestcard/shared';
 import { configureGoogleSignIn, signInWithGoogle, signOutGoogle, loadUser } from '../lib/auth';
 import type { User } from '../lib/auth';
 
@@ -118,10 +120,7 @@ export default function HomeScreen() {
     }
   };
 
-  const formatReward = (rec: Recommendation) => {
-    if (rec.rewardType === 'points') return `${rec.rate}x points`;
-    return `${rec.rate}% cash back`;
-  };
+
 
   const formatEffective = (rec: Recommendation) => {
     if (rec.rewardType !== 'points') return null;

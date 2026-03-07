@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, CreditCard, X, ChevronDown, Star, AlertCircle, Clock, LogIn, LogOut, ExternalLink } from 'lucide-react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { formatReward, formatEffectiveValue, sortRecommendations, sortProtections } from '@pickthebestcard/shared';
+import type { Recommendation, Protection, MerchantMatch, Merchant, Category } from '@pickthebestcard/shared';
 
 function isEmbeddedBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
@@ -18,54 +20,6 @@ interface Card {
   reward_type: string;
   points_value: number;
   color: string;
-}
-
-interface Recommendation {
-  cardId: number;
-  cardName: string;
-  issuer: string;
-  color: string;
-  rate: number;
-  effectiveRate: number;
-  benefitType: string;
-  rewardType: string;
-  category: string | null;
-  notes: string | null;
-  spendCap: number | null;
-  capPeriod: string | null;
-  requiresActivation: boolean;
-  validUntil: string | null;
-  isRotating: boolean;
-  baseRate: number;
-  benefitsUrl: string | null;
-}
-
-interface MerchantMatch {
-  merchantId: number | null;
-  merchantName: string;
-  categoryId: number | null;
-  categoryName: string | null;
-  isOnline: boolean;
-}
-
-interface Protection {
-  cardId: number;
-  cardName: string;
-  issuer: string;
-  color: string;
-  protectionType: 'car_rental_insurance' | 'extended_warranty';
-  coverageDetails: string;
-  coverageTier: 'primary' | 'secondary' | 'unknown';
-  notes: string | null;
-  benefitsUrl: string | null;
-}
-
-interface Merchant {
-  id: number;
-  name: string;
-  domain: string;
-  category_name: string;
-  category_icon: string;
 }
 
 export default function Home() {
@@ -190,16 +144,7 @@ export default function Home() {
     }
   };
 
-  const formatReward = (rec: Recommendation) => {
-    if (rec.rewardType === 'points') return `${rec.rate}x points`;
-    return `${rec.rate}% cash back`;
-  };
 
-  const formatEffectiveValue = (rec: Recommendation) => {
-    if (rec.rewardType !== 'points') return null;
-    const effective = rec.effectiveRate.toFixed(1).replace(/\.0$/, '');
-    return `~${effective}% value`;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">

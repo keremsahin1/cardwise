@@ -7,7 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  test-shared:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: shared/package-lock.json
+      - name: Install dependencies
+        working-directory: shared
+        run: npm install
+      - name: Run shared tests
+        working-directory: shared
+        run: npm test
+
   test-web:
+    needs: test-shared
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +41,7 @@ jobs:
         run: npm test
 
   test-mobile:
+    needs: test-shared
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
