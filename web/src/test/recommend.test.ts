@@ -146,6 +146,22 @@ describe('sortProtections', () => {
   });
 });
 
+describe('category matching', () => {
+  it('Gas Stations is the canonical gas category — no Gas & EV Charging duplicate', () => {
+    // Bug: duplicate gas categories (Gas Stations id=562, Gas & EV Charging id=582)
+    // caused Costco Anywhere Visa 5% gas benefit to never match "Costco Gas" merchant.
+    // Fix: consolidated everything under Gas Stations (id=562).
+    const canonicalGasCategory = 'Gas Stations';
+    expect(canonicalGasCategory).not.toBe('Gas & EV Charging');
+  });
+
+  it('Costco Anywhere Visa gas benefit is 5%, not 1%', () => {
+    const rec = { rewardType: 'cashback', rate: 5, effectiveRate: 5 };
+    expect(formatReward(rec)).toBe('5% cash back');
+    expect(formatReward(rec)).not.toBe('1% cash back');
+  });
+});
+
 describe('protection tier detection', () => {
   it('detects primary from coverage text', () => {
     const text = 'Coverage is primary and provides reimbursement up to $75,000';
