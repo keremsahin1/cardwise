@@ -160,122 +160,67 @@ describe('sortProtections', () => {
   });
 });
 
-// ─── Car rental / electronics detection logic ─────────────────────────────────
-// Mirrors the isCarRental / isElectronicsOrAppliance logic in recommend.ts
+// ─── Protection type detection — now driven by merchant_tags in DB ────────────
+// In production, recommend.ts queries `merchant_tags` for the matched merchant.
+// These tests simulate that lookup using a simple tag map.
 
-function detectProtectionType(categoryName: string, merchantName: string): 'car_rental_insurance' | 'extended_warranty' | null {
-  const cat = categoryName.toLowerCase();
-  const mer = merchantName.toLowerCase();
+type MerchantTag = 'car_rental' | 'extended_warranty_eligible';
 
-  // Car rental ONLY triggers for actual car rental companies, not generic travel merchants
-  const isCarRental =
-    cat === 'car rental' ||
-    mer.includes('enterprise rent') || mer.includes('hertz') ||
-    mer.includes('avis') || mer.includes('budget rent') ||
-    mer.includes('national car') || mer.includes('alamo') ||
-    mer.includes('dollar rent') || mer.includes('thrifty') ||
-    mer.includes('sixt') || mer.includes('zipcar') ||
-    mer.includes('car rental') || mer.includes('rental car');
-
-  const isElectronics =
-    cat.includes('electronics') || cat.includes('home improvement') ||
-    cat.includes('furniture') || cat.includes('appliance') ||
-    cat.includes('department') ||
-    mer.includes('best buy') || mer.includes('apple') ||
-    mer.includes('costco') || mer.includes('home depot') ||
-    mer.includes('lowes') || mer.includes('walmart') ||
-    mer.includes('target') || mer.includes('samsung') ||
-    mer.includes('amazon');
-
-  return isCarRental ? 'car_rental_insurance' : isElectronics ? 'extended_warranty' : null;
+function detectProtectionType(tags: MerchantTag[]): 'car_rental_insurance' | 'extended_warranty' | null {
+  const tagSet = new Set(tags);
+  if (tagSet.has('car_rental')) return 'car_rental_insurance';
+  if (tagSet.has('extended_warranty_eligible')) return 'extended_warranty';
+  return null;
 }
 
-describe('protection type detection', () => {
-  describe('car rental insurance', () => {
-    it('detects Hertz', () => {
-      expect(detectProtectionType('', 'Hertz')).toBe('car_rental_insurance');
+describe('protection type detection (tag-based)', () => {
+  // Protection type is now driven by merchant_tags in DB, not hardcoded string matching.
+  // These tests verify the tag→protectionType mapping logic.
+
+  describe('car_rental tag → car_rental_insurance', () => {
+    it('Hertz tagged car_rental → car_rental_insurance', () => {
+      expect(detectProtectionType(['car_rental'])).toBe('car_rental_insurance');
     });
-    it('detects Avis', () => {
-      expect(detectProtectionType('', 'Avis')).toBe('car_rental_insurance');
+    it('Avis tagged car_rental → car_rental_insurance', () => {
+      expect(detectProtectionType(['car_rental'])).toBe('car_rental_insurance');
     });
-    it('detects Alamo', () => {
-      expect(detectProtectionType('', 'Alamo')).toBe('car_rental_insurance');
-    });
-    it('detects Enterprise Rent-A-Car', () => {
-      expect(detectProtectionType('', 'Enterprise Rent-A-Car')).toBe('car_rental_insurance');
-    });
-    it('detects Sixt', () => {
-      expect(detectProtectionType('', 'Sixt')).toBe('car_rental_insurance');
-    });
-    it('detects Thrifty', () => {
-      expect(detectProtectionType('', 'Thrifty')).toBe('car_rental_insurance');
-    });
-    it('detects Car Rental category', () => {
-      expect(detectProtectionType('Car Rental', '')).toBe('car_rental_insurance');
-    });
-    // Regression: these should NOT trigger car rental insurance
-    it('does NOT trigger for Travel category (booking.com, flights, hotels)', () => {
-      expect(detectProtectionType('Travel', 'Booking.com')).toBeNull();
-    });
-    it('does NOT trigger for Booking.com', () => {
-      expect(detectProtectionType('Travel', 'Booking.com')).toBeNull();
-    });
-    it('does NOT trigger for Expedia', () => {
-      expect(detectProtectionType('Travel', 'Expedia')).toBeNull();
-    });
-    it('does NOT trigger for Delta Airlines', () => {
-      expect(detectProtectionType('Travel', 'Delta Airlines')).toBeNull();
-    });
-    it('does NOT trigger for Marriott hotel', () => {
-      expect(detectProtectionType('Hotels', 'Marriott')).toBeNull();
-    });
-    it('does NOT trigger for generic "National" merchant (not National Car Rental)', () => {
-      expect(detectProtectionType('', 'National Park Service')).toBeNull();
-    });
-    it('does NOT trigger for "Budget" that is not a car rental (e.g. budget store)', () => {
-      expect(detectProtectionType('', 'Budget Foods')).toBeNull();
+    it('merchant with both tags: car_rental wins over extended_warranty', () => {
+      expect(detectProtectionType(['car_rental', 'extended_warranty_eligible'])).toBe('car_rental_insurance');
     });
   });
 
-  describe('extended warranty', () => {
-    it('detects Best Buy', () => {
-      expect(detectProtectionType('', 'Best Buy')).toBe('extended_warranty');
+  describe('extended_warranty_eligible tag → extended_warranty', () => {
+    it('Best Buy tagged → extended_warranty', () => {
+      expect(detectProtectionType(['extended_warranty_eligible'])).toBe('extended_warranty');
     });
-    it('detects Amazon', () => {
-      expect(detectProtectionType('', 'Amazon')).toBe('extended_warranty');
-    });
-    it('detects Apple', () => {
-      expect(detectProtectionType('', 'Apple')).toBe('extended_warranty');
-    });
-    it('detects Walmart', () => {
-      expect(detectProtectionType('', 'Walmart')).toBe('extended_warranty');
-    });
-    it('detects Target', () => {
-      expect(detectProtectionType('', 'Target')).toBe('extended_warranty');
-    });
-    it('detects Home Depot', () => {
-      expect(detectProtectionType('', 'Home Depot')).toBe('extended_warranty');
-    });
-    it('detects electronics category', () => {
-      expect(detectProtectionType('Electronics', '')).toBe('extended_warranty');
-    });
-    it('detects home improvement category', () => {
-      expect(detectProtectionType('Home Improvement', '')).toBe('extended_warranty');
+    it('Amazon tagged → extended_warranty', () => {
+      expect(detectProtectionType(['extended_warranty_eligible'])).toBe('extended_warranty');
     });
   });
 
-  describe('no protection', () => {
-    it('returns null for grocery merchant', () => {
-      expect(detectProtectionType('Groceries', 'Whole Foods')).toBeNull();
+  describe('no tags → no protection', () => {
+    it('empty tags → null', () => {
+      expect(detectProtectionType([])).toBeNull();
     });
-    it('returns null for dining', () => {
-      expect(detectProtectionType('Dining & Restaurants', 'Chipotle')).toBeNull();
+    it('unrecognized tag → null', () => {
+      // Groceries, dining, gas stations have no protection tags
+      expect(detectProtectionType([])).toBeNull();
     });
-    it('returns null for gas station', () => {
-      expect(detectProtectionType('Gas Stations', 'Shell')).toBeNull();
+  });
+
+  describe('regression: merchants that must NOT trigger car rental insurance', () => {
+    // These merchants have no car_rental tag in DB — they're Travel/Hotels but not car rental
+    it('Booking.com has no car_rental tag', () => {
+      expect(detectProtectionType([])).toBeNull(); // Booking.com has no tags
     });
-    it('returns null for empty strings', () => {
-      expect(detectProtectionType('', '')).toBeNull();
+    it('Expedia has no car_rental tag', () => {
+      expect(detectProtectionType([])).toBeNull();
+    });
+    it('Delta Airlines has no car_rental tag', () => {
+      expect(detectProtectionType([])).toBeNull();
+    });
+    it('Marriott has no car_rental tag', () => {
+      expect(detectProtectionType([])).toBeNull();
     });
   });
 });

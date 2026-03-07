@@ -49,6 +49,8 @@ export interface MerchantMatch {
   isOnline: boolean;
 }
 
+export type MerchantTag = 'car_rental' | 'extended_warranty_eligible';
+
 export interface Merchant {
   id: number;
   name: string;

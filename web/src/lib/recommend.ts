@@ -145,31 +145,16 @@ export async function getRecommendations(cardIds: number[], merchantQuery: strin
 
   results.sort((a, b) => b.effectiveRate - a.effectiveRate);
 
-  // Fetch relevant protections based on category
+  // Determine relevant protection type via merchant_tags — no hardcoding
   const protections: CardProtection[] = [];
-  const categoryName = merchant.categoryName?.toLowerCase() ?? '';
-  const merchantName = merchant.merchantName?.toLowerCase() ?? '';
+  let protectionType: 'car_rental_insurance' | 'extended_warranty' | null = null;
 
-  // Car rental insurance only applies when user is actually renting a car —
-  // NOT for generic travel merchants (airlines, hotels, booking sites, etc.)
-  const isCarRental = categoryName === 'car rental' ||
-    merchantName.includes('enterprise rent') || merchantName.includes('hertz') ||
-    merchantName.includes('avis') || merchantName.includes('budget rent') ||
-    merchantName.includes('national car') || merchantName.includes('alamo') ||
-    merchantName.includes('dollar rent') || merchantName.includes('thrifty') ||
-    merchantName.includes('sixt') || merchantName.includes('zipcar') ||
-    merchantName.includes('car rental') || merchantName.includes('rental car');
-
-  const isElectronicsOrAppliance = categoryName.includes('electronics') ||
-    categoryName.includes('home improvement') || categoryName.includes('furniture') ||
-    categoryName.includes('appliance') || categoryName.includes('department') ||
-    merchantName.includes('best buy') || merchantName.includes('apple') ||
-    merchantName.includes('costco') || merchantName.includes('home depot') ||
-    merchantName.includes('lowes') || merchantName.includes('walmart') ||
-    merchantName.includes('target') || merchantName.includes('samsung') ||
-    merchantName.includes('amazon');
-
-  const protectionType = isCarRental ? 'car_rental_insurance' : isElectronicsOrAppliance ? 'extended_warranty' : null;
+  if (merchant.merchantId) {
+    const tags = await sql`SELECT tag FROM merchant_tags WHERE merchant_id = ${merchant.merchantId}`;
+    const tagSet = new Set(tags.map((t: { tag: string }) => t.tag));
+    if (tagSet.has('car_rental')) protectionType = 'car_rental_insurance';
+    else if (tagSet.has('extended_warranty_eligible')) protectionType = 'extended_warranty';
+  }
 
   if (protectionType && cardIds.length) {
     const rows = await sql`

@@ -97,4 +97,14 @@ async function insertFixedBenefit(cardId, b, defaultType = 'cashback') {
   return true;
 }
 
-module.exports = { getCardId, getCategoryId, upsertRotatingBenefit, upsertProtection, insertFixedBenefit };
+/**
+ * Tag a merchant by name. Silently skips if merchant not found.
+ * Valid tags: 'car_rental', 'extended_warranty_eligible'
+ */
+async function upsertMerchantTag(merchantName, tag) {
+  const rows = await sql`SELECT id FROM merchants WHERE LOWER(name) = LOWER(${merchantName})`;
+  if (!rows.length) return;
+  await sql`INSERT INTO merchant_tags (merchant_id, tag) VALUES (${rows[0].id}, ${tag}) ON CONFLICT DO NOTHING`;
+}
+
+module.exports = { getCardId, getCategoryId, upsertRotatingBenefit, upsertProtection, insertFixedBenefit, upsertMerchantTag };
