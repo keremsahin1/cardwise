@@ -47,4 +47,20 @@ async function upsertRotatingBenefit({ cardName, categoryName, rate, validFrom, 
   console.log(`  ✓ ${cardName} → ${categoryName} @ ${rate}% (${validFrom} – ${validUntil})`);
 }
 
-module.exports = { getCardId, getCategoryId, upsertRotatingBenefit };
+/**
+ * Upsert a card protection benefit.
+ * Replaces existing entry for same card + protection type.
+ */
+async function upsertProtection({ cardId, protectionType, coverageDetails, notes }) {
+  // Replace existing entry for this card + type
+  await sql`
+    DELETE FROM card_protections WHERE card_id = ${cardId} AND protection_type = ${protectionType}
+  `;
+  await sql`
+    INSERT INTO card_protections (card_id, protection_type, coverage_details, notes)
+    VALUES (${cardId}, ${protectionType}, ${coverageDetails}, ${notes ?? null})
+  `;
+  console.log(`  🛡️  ${protectionType} → ${coverageDetails}`);
+}
+
+module.exports = { getCardId, getCategoryId, upsertRotatingBenefit, upsertProtection };

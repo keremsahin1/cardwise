@@ -101,4 +101,50 @@ Return ONLY a JSON array, no explanation. Example:
   }
 }
 
-module.exports = { parseBenefits, parseFixedBenefits };
+/**
+ * Parse raw page text to extract card protection benefits.
+ * Returns array of: { protectionType, coverageDetails, notes }
+ */
+async function parseProtections(rawText, context) {
+  if (!OPENAI_API_KEY) {
+    console.log('  ℹ️  No OPENAI_API_KEY — skipping protection extraction');
+    return [];
+  }
+
+  const prompt = `You are extracting card protection benefits from an official credit card product page.
+
+Context: ${context}
+
+Page content:
+${rawText.slice(0, 8000)}
+
+Extract ONLY these two protection types if present:
+1. Car rental insurance / auto rental collision damage waiver (CDW)
+2. Extended warranty protection
+
+For each protection found, return JSON with:
+- protectionType: "car_rental_insurance" or "extended_warranty"
+- coverageDetails: string describing the coverage (e.g. "Primary coverage up to $75,000" or "Extends manufacturer warranty by 1 year up to $10,000")
+- notes: string with any important conditions/caveats, or null (e.g. "Must decline rental company CDW", "Original warranty must be 3 years or less")
+
+Return ONLY a JSON array, no explanation. If neither protection is found, return [].
+Example:
+[{"protectionType":"car_rental_insurance","coverageDetails":"Primary coverage up to $75,000","notes":"Must decline the rental company's collision damage waiver"},{"protectionType":"extended_warranty","coverageDetails":"Extends manufacturer warranty by 1 additional year","notes":"Original warranty must be 3 years or less. Max $10,000 per claim."}]`;
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], temperature: 0 }),
+  });
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content ?? '[]';
+  try {
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    console.warn('  ⚠️  LLM returned unparseable JSON for protections');
+    return [];
+  }
+}
+
+module.exports = { parseBenefits, parseFixedBenefits, parseProtections };

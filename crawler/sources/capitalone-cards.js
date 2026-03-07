@@ -5,7 +5,8 @@
  */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env.local') });
 const { neon } = require('../node_modules/@neondatabase/serverless');
-const { parseFixedBenefits } = require('../parse');
+const { parseFixedBenefits, parseProtections } = require('../parse');
+const { upsertProtection } = require('../db');
 
 const INDEX_URL = 'https://www.capitalone.com/credit-cards/';
 const sql = neon(process.env.DATABASE_URL);
@@ -73,6 +74,13 @@ async function extractAllBenefits(page) {
         await sql`INSERT INTO card_benefits (card_id, category_id, rate, benefit_type, notes) VALUES (${card.id}, ${cats[0].id}, ${b.rate}, ${b.type ?? 'cashback'}, ${b.notes ?? null})`;
         console.log(`    ✓ ${b.category} @ ${b.rate}${b.type === 'cashback' ? '%' : 'x'}`);
         total++;
+      }
+
+      // Extract protections
+      const protections = await parseProtections(rawText, `Capital One credit card: ${card.name}`);
+      for (const p of protections) {
+        if (!p.protectionType || !p.coverageDetails) continue;
+        await upsertProtection({ cardId: card.id, protectionType: p.protectionType, coverageDetails: p.coverageDetails, notes: p.notes });
       }
     } catch (e) {
       console.log(`    ❌ ${e.message.slice(0, 80)}`);
