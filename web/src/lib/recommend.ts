@@ -150,10 +150,14 @@ export async function getRecommendations(cardIds: number[], merchantQuery: strin
   const categoryName = merchant.categoryName?.toLowerCase() ?? '';
   const merchantName = merchant.merchantName?.toLowerCase() ?? '';
 
-  const isCarRental = categoryName.includes('travel') || categoryName.includes('transit') ||
-    merchantName.includes('enterprise') || merchantName.includes('hertz') ||
-    merchantName.includes('avis') || merchantName.includes('budget') ||
-    merchantName.includes('national') || merchantName.includes('alamo') ||
+  // Car rental insurance only applies when user is actually renting a car —
+  // NOT for generic travel merchants (airlines, hotels, booking sites, etc.)
+  const isCarRental = categoryName === 'car rental' ||
+    merchantName.includes('enterprise rent') || merchantName.includes('hertz') ||
+    merchantName.includes('avis') || merchantName.includes('budget rent') ||
+    merchantName.includes('national car') || merchantName.includes('alamo') ||
+    merchantName.includes('dollar rent') || merchantName.includes('thrifty') ||
+    merchantName.includes('sixt') || merchantName.includes('zipcar') ||
     merchantName.includes('car rental') || merchantName.includes('rental car');
 
   const isElectronicsOrAppliance = categoryName.includes('electronics') ||

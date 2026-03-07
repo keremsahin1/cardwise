@@ -167,11 +167,14 @@ function detectProtectionType(categoryName: string, merchantName: string): 'car_
   const cat = categoryName.toLowerCase();
   const mer = merchantName.toLowerCase();
 
+  // Car rental ONLY triggers for actual car rental companies, not generic travel merchants
   const isCarRental =
-    cat.includes('travel') || cat.includes('transit') ||
-    mer.includes('enterprise') || mer.includes('hertz') ||
-    mer.includes('avis') || mer.includes('budget') ||
-    mer.includes('national') || mer.includes('alamo') ||
+    cat === 'car rental' ||
+    mer.includes('enterprise rent') || mer.includes('hertz') ||
+    mer.includes('avis') || mer.includes('budget rent') ||
+    mer.includes('national car') || mer.includes('alamo') ||
+    mer.includes('dollar rent') || mer.includes('thrifty') ||
+    mer.includes('sixt') || mer.includes('zipcar') ||
     mer.includes('car rental') || mer.includes('rental car');
 
   const isElectronics =
@@ -189,26 +192,48 @@ function detectProtectionType(categoryName: string, merchantName: string): 'car_
 
 describe('protection type detection', () => {
   describe('car rental insurance', () => {
-    it('detects Enterprise by merchant name', () => {
-      expect(detectProtectionType('', 'Enterprise')).toBe('car_rental_insurance');
-    });
-    it('detects Hertz by merchant name', () => {
+    it('detects Hertz', () => {
       expect(detectProtectionType('', 'Hertz')).toBe('car_rental_insurance');
     });
-    it('detects Avis by merchant name', () => {
+    it('detects Avis', () => {
       expect(detectProtectionType('', 'Avis')).toBe('car_rental_insurance');
     });
-    it('detects Budget by merchant name', () => {
-      expect(detectProtectionType('', 'Budget')).toBe('car_rental_insurance');
-    });
-    it('detects Alamo by merchant name', () => {
+    it('detects Alamo', () => {
       expect(detectProtectionType('', 'Alamo')).toBe('car_rental_insurance');
     });
-    it('detects National by merchant name', () => {
-      expect(detectProtectionType('', 'National')).toBe('car_rental_insurance');
+    it('detects Enterprise Rent-A-Car', () => {
+      expect(detectProtectionType('', 'Enterprise Rent-A-Car')).toBe('car_rental_insurance');
     });
-    it('detects travel category', () => {
-      expect(detectProtectionType('Travel', '')).toBe('car_rental_insurance');
+    it('detects Sixt', () => {
+      expect(detectProtectionType('', 'Sixt')).toBe('car_rental_insurance');
+    });
+    it('detects Thrifty', () => {
+      expect(detectProtectionType('', 'Thrifty')).toBe('car_rental_insurance');
+    });
+    it('detects Car Rental category', () => {
+      expect(detectProtectionType('Car Rental', '')).toBe('car_rental_insurance');
+    });
+    // Regression: these should NOT trigger car rental insurance
+    it('does NOT trigger for Travel category (booking.com, flights, hotels)', () => {
+      expect(detectProtectionType('Travel', 'Booking.com')).toBeNull();
+    });
+    it('does NOT trigger for Booking.com', () => {
+      expect(detectProtectionType('Travel', 'Booking.com')).toBeNull();
+    });
+    it('does NOT trigger for Expedia', () => {
+      expect(detectProtectionType('Travel', 'Expedia')).toBeNull();
+    });
+    it('does NOT trigger for Delta Airlines', () => {
+      expect(detectProtectionType('Travel', 'Delta Airlines')).toBeNull();
+    });
+    it('does NOT trigger for Marriott hotel', () => {
+      expect(detectProtectionType('Hotels', 'Marriott')).toBeNull();
+    });
+    it('does NOT trigger for generic "National" merchant (not National Car Rental)', () => {
+      expect(detectProtectionType('', 'National Park Service')).toBeNull();
+    });
+    it('does NOT trigger for "Budget" that is not a car rental (e.g. budget store)', () => {
+      expect(detectProtectionType('', 'Budget Foods')).toBeNull();
     });
   });
 
