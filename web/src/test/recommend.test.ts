@@ -155,10 +155,20 @@ describe('category matching', () => {
     expect(canonicalGasCategory).not.toBe('Gas & EV Charging');
   });
 
-  it('Costco Anywhere Visa gas benefit is 5%, not 1%', () => {
+  it('Costco Anywhere Visa gas benefit is 5% at Costco Gas, not 1%', () => {
     const rec = { rewardType: 'cashback', rate: 5, effectiveRate: 5 };
     expect(formatReward(rec)).toBe('5% cash back');
     expect(formatReward(rec)).not.toBe('1% cash back');
+  });
+
+  it('Costco Anywhere Visa earns 4% at other gas stations', () => {
+    const rec = { rewardType: 'cashback', rate: 4, effectiveRate: 4 };
+    expect(formatReward(rec)).toBe('4% cash back');
+  });
+
+  it('Costco Anywhere Visa earns 2% at Costco (wholesale, not gas)', () => {
+    const rec = { rewardType: 'cashback', rate: 2, effectiveRate: 2 };
+    expect(formatReward(rec)).toBe('2% cash back');
   });
 });
 
