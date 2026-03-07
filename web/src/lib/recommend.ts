@@ -151,7 +151,7 @@ export async function getRecommendations(cardIds: number[], merchantQuery: strin
 
   if (merchant.merchantId) {
     const tags = await sql`SELECT tag FROM merchant_tags WHERE merchant_id = ${merchant.merchantId}`;
-    const tagSet = new Set(tags.map((t: { tag: string }) => t.tag));
+    const tagSet = new Set(tags.map((t: Record<string, string>) => t.tag));
     if (tagSet.has('car_rental')) protectionType = 'car_rental_insurance';
     else if (tagSet.has('extended_warranty_eligible')) protectionType = 'extended_warranty';
   }
