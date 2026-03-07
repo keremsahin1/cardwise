@@ -116,7 +116,7 @@ async function parseProtections(rawText, context) {
 Context: ${context}
 
 Page content:
-${rawText.slice(0, 8000)}
+${rawText.slice(0, 12000)}
 
 Extract ONLY these two protection types if present:
 1. Car rental insurance / auto rental collision damage waiver (CDW)

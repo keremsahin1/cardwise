@@ -81,6 +81,11 @@ async function extractAllBenefits(page) {
     try {
       await page.goto(card.benefits_url, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(2000);
+      // Scroll to bottom to trigger lazy-loaded content
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(2000);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.waitForTimeout(1000);
       const rawText = await page.evaluate(() => document.body.innerText);
 
       const benefits = await parseFixedBenefits(rawText, `Chase credit card: ${card.name}`);
