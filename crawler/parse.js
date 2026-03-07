@@ -36,14 +36,27 @@ ${rawText.slice(0, 6000)}
 Extract all FIXED (non-rotating, always-on) reward rates per spend category.
 Do NOT include rotating/quarterly bonus categories or sign-up bonuses.
 
+IMPORTANT: Some cards offer different rates within the same category depending on where you shop.
+For example: "5% at Costco gas stations, 4% at other gas stations" = TWO separate entries.
+When a card earns different rates at a specific merchant vs. the broader category, return BOTH:
+  1. The merchant-specific rate with a "merchant" field (the specific store name)
+  2. The general category rate without a "merchant" field
+
 For each benefit, return JSON with:
-- category: one of: "Groceries", "Dining & Restaurants", "Gas & EV Charging", "Online Shopping", "Travel", "Hotels", "Streaming Services", "Drugstores & Pharmacy", "Wholesale Clubs", "Home Improvement", "Amazon", "General / Everything Else"
+- category: one of: "Groceries", "Dining & Restaurants", "Gas Stations", "Online Shopping", "Travel", "Hotels", "Streaming Services", "Drugstores & Pharmacy", "Wholesale Clubs", "Home Improvement", "Amazon", "General / Everything Else"
+- merchant: string or null — only set when the rate applies to a specific merchant (e.g. "Costco Gas", "Walmart", "Amazon")
 - rate: number (e.g. 3 for 3x points or 3% cashback)
 - type: "cashback" or "points"
 - notes: string or null
+- spendCap: number or null — annual/period spend cap in dollars where rate applies (e.g. 7000 for $7,000/year)
+- capPeriod: "year" or "quarter" or null
 
 Return ONLY a JSON array, no explanation. Example:
-[{"category":"Dining & Restaurants","rate":3,"type":"points","notes":"3x on dining worldwide"},{"category":"General / Everything Else","rate":1,"type":"points","notes":null}]`;
+[
+  {"category":"Gas Stations","merchant":"Costco Gas","rate":5,"type":"cashback","notes":"5% at Costco gas stations","spendCap":7000,"capPeriod":"year"},
+  {"category":"Gas Stations","merchant":null,"rate":4,"type":"cashback","notes":"4% at other eligible gas and EV charging stations","spendCap":7000,"capPeriod":"year"},
+  {"category":"Dining & Restaurants","merchant":null,"rate":3,"type":"points","notes":"3x on dining worldwide","spendCap":null,"capPeriod":null}
+]`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',

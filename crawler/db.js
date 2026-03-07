@@ -63,4 +63,38 @@ async function upsertProtection({ cardId, protectionType, coverageDetails, notes
   console.log(`  🛡️  ${protectionType} [${tier}] → ${coverageDetails}`);
 }
 
-module.exports = { getCardId, getCategoryId, upsertRotatingBenefit, upsertProtection };
+/**
+ * Insert a parsed fixed benefit (from parseFixedBenefits) for a given card.
+ * Handles both merchant-specific rates (b.merchant set) and category-level rates.
+ * This is the single canonical insertion path — all crawlers should use this.
+ */
+async function insertFixedBenefit(cardId, b, defaultType = 'cashback') {
+  if (!b.category || b.rate == null) return false;
+
+  await sql`INSERT INTO categories (name, icon) VALUES (${b.category}, '🏷️') ON CONFLICT (name) DO NOTHING`;
+  const [cat] = await sql`SELECT id FROM categories WHERE name = ${b.category}`;
+  if (!cat) { console.warn(`  ⚠️  Could not find/create category: ${b.category}`); return false; }
+
+  const spendCap = b.spendCap ?? null;
+  const capPeriod = b.capPeriod ?? null;
+  const benefitType = b.type ?? defaultType;
+  const notes = b.notes ?? null;
+
+  if (b.merchant) {
+    const [merchant] = await sql`SELECT id FROM merchants WHERE LOWER(name) = LOWER(${b.merchant})`;
+    if (!merchant) {
+      console.log(`    ⚠️  Merchant not found: "${b.merchant}" — skipping merchant-specific rate`);
+      return false;
+    }
+    await sql`INSERT INTO card_benefits (card_id, merchant_id, rate, benefit_type, notes, spend_cap, cap_period)
+      VALUES (${cardId}, ${merchant.id}, ${b.rate}, ${benefitType}, ${notes}, ${spendCap}, ${capPeriod})`;
+    console.log(`    ✓ ${b.merchant} (merchant) @ ${b.rate}${benefitType === 'cashback' ? '%' : 'x'}`);
+  } else {
+    await sql`INSERT INTO card_benefits (card_id, category_id, rate, benefit_type, notes, spend_cap, cap_period)
+      VALUES (${cardId}, ${cat.id}, ${b.rate}, ${benefitType}, ${notes}, ${spendCap}, ${capPeriod})`;
+    console.log(`    ✓ ${b.category} @ ${b.rate}${benefitType === 'cashback' ? '%' : 'x'}`);
+  }
+  return true;
+}
+
+module.exports = { getCardId, getCategoryId, upsertRotatingBenefit, upsertProtection, insertFixedBenefit };

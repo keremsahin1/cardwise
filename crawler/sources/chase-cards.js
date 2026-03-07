@@ -7,7 +7,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env.local') });
 const { neon } = require('../node_modules/@neondatabase/serverless');
 const { parseFixedBenefits, parseProtections } = require('../parse');
-const { upsertProtection } = require('../db');
+const { upsertProtection, insertFixedBenefit } = require('../db');
 
 const INDEX_URL = 'https://creditcards.chase.com/all-credit-cards';
 const sql = neon(process.env.DATABASE_URL);
@@ -95,16 +95,7 @@ async function extractAllBenefits(page) {
       await sql`DELETE FROM card_benefits WHERE card_id = ${card.id} AND valid_from IS NULL AND valid_until IS NULL`;
 
       for (const b of benefits) {
-        if (!b.category || b.rate == null) continue;
-        await sql`INSERT INTO categories (name, icon) VALUES (${b.category}, '🏷️') ON CONFLICT (name) DO NOTHING`;
-        const cats = await sql`SELECT id FROM categories WHERE name = ${b.category}`;
-        if (!cats.length) continue;
-        await sql`
-          INSERT INTO card_benefits (card_id, category_id, rate, benefit_type, notes)
-          VALUES (${card.id}, ${cats[0].id}, ${b.rate}, ${b.type ?? 'points'}, ${b.notes ?? null})
-        `;
-        console.log(`    ✓ ${b.category} @ ${b.rate}${b.type === 'cashback' ? '%' : 'x'}`);
-        total++;
+        if (await insertFixedBenefit(card.id, b, 'points')) total++;
       }
 
       // Extract protections
