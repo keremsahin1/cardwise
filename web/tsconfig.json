@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@pickthebestcard/shared": ["./src/shared/index.ts"]
     }
   },
   "include": [

@@ -14,6 +14,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@pickthebestcard/shared': path.resolve(__dirname, './src/shared/index.ts'),
     },
   },
 });

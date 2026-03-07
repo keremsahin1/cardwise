@@ -4,6 +4,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^@pickthebestcard/shared$': '<rootDir>/lib/shared/index.ts',
   },
   globals: {
     'ts-jest': {
