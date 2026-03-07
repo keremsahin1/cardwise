@@ -36,26 +36,36 @@ ${rawText.slice(0, 6000)}
 Extract all FIXED (non-rotating, always-on) reward rates per spend category.
 Do NOT include rotating/quarterly bonus categories or sign-up bonuses.
 
-IMPORTANT: Some cards offer different rates within the same category depending on where you shop.
-For example: "5% at Costco gas stations, 4% at other gas stations" = TWO separate entries.
-When a card earns different rates at a specific merchant vs. the broader category, return BOTH:
-  1. The merchant-specific rate with a "merchant" field (the specific store name)
-  2. The general category rate without a "merchant" field
+CRITICAL RULES about merchant-specific vs category-wide benefits:
+
+1. When a benefit applies only to a SPECIFIC brand (hotel chain, airline, store), set "merchant" to that brand name.
+   DO NOT use a category like "Hotels" or "Airlines" for loyalty card bonuses.
+   Examples:
+   - "9x points at Hyatt hotels" → merchant: "Hyatt", NOT category: "Hotels"
+   - "26x points at IHG Hotels and Resorts" → merchant: "InterContinental Hotels Group (IHG)", NOT category: "Hotels"
+   - "6x points at Marriott hotels" → merchant: "Marriott", NOT category: "Hotels"
+   - "10x miles at United Airlines" → merchant: "United Airlines", NOT category: "Travel"
+   - "5x at Hilton properties" → merchant: "Hilton", NOT category: "Hotels"
+   - "5% at Costco gas stations, 4% elsewhere" → TWO entries: merchant: "Costco Gas" at 5%, then category: "Gas Stations" at 4%
+
+2. Only use a category (no merchant) when the benefit truly applies to ALL merchants in that category.
+   Example: "3x on all dining" → category: "Dining & Restaurants", merchant: null
 
 For each benefit, return JSON with:
 - category: one of: "Groceries", "Dining & Restaurants", "Gas Stations", "Online Shopping", "Travel", "Hotels", "Streaming Services", "Drugstores & Pharmacy", "Wholesale Clubs", "Home Improvement", "Amazon", "General / Everything Else"
-- merchant: string or null — only set when the rate applies to a specific merchant (e.g. "Costco Gas", "Walmart", "Amazon")
+- merchant: string or null — the specific merchant/brand name when the rate is brand-specific (see rules above)
 - rate: number (e.g. 3 for 3x points or 3% cashback)
 - type: "cashback" or "points"
 - notes: string or null
-- spendCap: number or null — annual/period spend cap in dollars where rate applies (e.g. 7000 for $7,000/year)
+- spendCap: number or null — annual/period spend cap in dollars (e.g. 7000 for $7,000/year)
 - capPeriod: "year" or "quarter" or null
 
 Return ONLY a JSON array, no explanation. Example:
 [
-  {"category":"Gas Stations","merchant":"Costco Gas","rate":5,"type":"cashback","notes":"5% at Costco gas stations","spendCap":7000,"capPeriod":"year"},
-  {"category":"Gas Stations","merchant":null,"rate":4,"type":"cashback","notes":"4% at other eligible gas and EV charging stations","spendCap":7000,"capPeriod":"year"},
-  {"category":"Dining & Restaurants","merchant":null,"rate":3,"type":"points","notes":"3x on dining worldwide","spendCap":null,"capPeriod":null}
+  {"category":"Hotels","merchant":"Hyatt","rate":9,"type":"points","notes":"Up to 9x total points at Hyatt hotels","spendCap":null,"capPeriod":null},
+  {"category":"Dining & Restaurants","merchant":null,"rate":2,"type":"points","notes":"2x on dining worldwide","spendCap":null,"capPeriod":null},
+  {"category":"Gas Stations","merchant":"Costco Gas","rate":5,"type":"cashback","notes":"5% at Costco gas","spendCap":7000,"capPeriod":"year"},
+  {"category":"Gas Stations","merchant":null,"rate":4,"type":"cashback","notes":"4% at other gas stations","spendCap":7000,"capPeriod":"year"}
 ]`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {

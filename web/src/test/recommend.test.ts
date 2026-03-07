@@ -308,6 +308,44 @@ describe('online merchant detection (unknown merchants)', () => {
 
 // ─── Category matching regressions ───────────────────────────────────────────
 
+describe('loyalty card hotel/airline specificity', () => {
+  // These test the principle: brand-specific loyalty bonuses must NOT match competing brands.
+  // e.g. World of Hyatt 9x should not apply at Marriott — only at Hyatt.
+
+  it('a card with base rate (1x) ranks lower than one with a matched benefit', () => {
+    const sorted = sortRecommendations([
+      makeRec('World of Hyatt (at Marriott → base)', 1.7, 'points', { rate: 1 }),
+      makeRec('Marriott Bonvoy Boundless (at Marriott → 17x)', 15.3, 'points', { rate: 17 }),
+    ]);
+    expect(sorted[0].cardName).toContain('Marriott Bonvoy');
+    expect(sorted[1].cardName).toContain('World of Hyatt');
+  });
+
+  it('loyalty card wins only at its own brand', () => {
+    // At Hyatt: World of Hyatt (9x) > Marriott Bonvoy (base 1x)
+    const atHyatt = sortRecommendations([
+      makeRec('World of Hyatt', 15.3, 'points', { rate: 9 }),
+      makeRec('Marriott Bonvoy Boundless', 0.9, 'points', { rate: 1 }),
+    ]);
+    expect(atHyatt[0].cardName).toBe('World of Hyatt');
+
+    // At Marriott: Marriott Bonvoy (17x) > World of Hyatt (base 1x)
+    const atMarriott = sortRecommendations([
+      makeRec('World of Hyatt', 1.7, 'points', { rate: 1 }),
+      makeRec('Marriott Bonvoy Boundless', 15.3, 'points', { rate: 17 }),
+    ]);
+    expect(atMarriott[0].cardName).toBe('Marriott Bonvoy Boundless');
+  });
+
+  it('IHG card base rate is used at non-IHG hotels', () => {
+    const sorted = sortRecommendations([
+      makeRec('IHG One Rewards Premier (at Marriott → base)', 1.5, 'points', { rate: 3 }),
+      makeRec('Marriott Bonvoy Boundless (at Marriott → 17x)', 15.3, 'points', { rate: 17 }),
+    ]);
+    expect(sorted[0].cardName).toContain('Marriott');
+  });
+});
+
 describe('category matching regressions', () => {
   it('Gas Stations is the canonical gas category (not "Gas & EV Charging")', () => {
     // Bug: duplicate categories caused Costco Anywhere Visa 5% to never match.
