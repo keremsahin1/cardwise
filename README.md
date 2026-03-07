@@ -79,8 +79,8 @@ Because Vercel only builds `web/` and Expo only builds `mobile/`, the shared sou
 | `categories` | 42 | Spend categories (Groceries, Hotels, Gas Stations, etc.) |
 | `merchants` | 505 | Known merchants with category and domain |
 | `merchant_tags` | 33 | Multi-tag system: `car_rental`, `extended_warranty_eligible` |
-| `users` | 3 | Signed-up users |
-| `user_cards` | 11 | Cards saved per user |
+| `users` | — | Signed-up users |
+| `user_cards` | — | Cards saved per user |
 
 ## Cards Supported
 
