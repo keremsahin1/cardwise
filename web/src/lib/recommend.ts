@@ -174,6 +174,7 @@ export async function getRecommendations(cardIds: number[], merchantQuery: strin
       WHERE cp.card_id = ANY(${cardIds}::int[]) AND cp.protection_type = ${protectionType}
       ORDER BY
         CASE cp.coverage_tier WHEN 'primary' THEN 1 WHEN 'secondary' THEN 2 ELSE 3 END,
+        COALESCE(CAST(REGEXP_REPLACE(cp.coverage_details, '.*\$([0-9,]+).*', '\1', 'g') AS BIGINT), 0) DESC,
         c.name
     `;
     for (const r of rows) {
