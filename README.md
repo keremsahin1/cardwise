@@ -5,7 +5,7 @@
 > Never leave rewards on the table. Pick The Best Card tells you exactly which credit card to use at any store.
 
 🌐 **Live at [pickthebestcard.com](https://pickthebestcard.com)**  
-📱 **iOS App** — submitted to the App Store
+📱 **[Download on the App Store](https://apps.apple.com/us/app/pick-the-best-card/id6760002381)**
 
 ## The Problem
 
