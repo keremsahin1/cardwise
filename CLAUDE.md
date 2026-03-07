@@ -31,7 +31,7 @@ This file contains standing rules for any AI assistant working on this codebase.
 ### 5. Run Checks Before Committing
 ```bash
 cd shared && npm test
-cd web && npm test && npx tsc --noEmit
+cd web && npx tsc --noEmit && npm test
 cd mobile && npm test
 ```
 
