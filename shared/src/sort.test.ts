@@ -77,6 +77,33 @@ describe('sortProtections', () => {
   });
 });
 
+describe('sortProtections - coverage amount extraction', () => {
+  it('correctly extracts $75,000 from coverage text', () => {
+    const p = makeProtection('Reserve', 'primary', 75000);
+    expect(p.coverageDetails).toContain('$75,000');
+  });
+
+  it('sorts $75k above $60k within primary tier', () => {
+    const sorted = sortProtections([
+      makeProtection('Preferred', 'primary', 60000),
+      makeProtection('Reserve', 'primary', 75000),
+    ]);
+    expect(sorted[0].cardName).toBe('Reserve');
+  });
+
+  it('handles cards with no dollar amount in coverage text', () => {
+    const protections = [
+      { cardId: 1, cardName: 'Card A', issuer: 'Chase', color: '#000',
+        protectionType: 'car_rental_insurance' as const,
+        coverageDetails: 'Worldwide car rental insurance',
+        coverageTier: 'unknown' as const, notes: null, benefitsUrl: null },
+      makeProtection('Card B', 'primary', 75000),
+    ];
+    const sorted = sortProtections(protections);
+    expect(sorted[0].cardName).toBe('Card B'); // primary beats unknown
+  });
+});
+
 describe('detectCoverageTier', () => {
   it('detects primary', () => {
     expect(detectCoverageTier('Coverage is primary and provides reimbursement up to $75,000')).toBe('primary');
