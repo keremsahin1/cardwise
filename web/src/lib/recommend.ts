@@ -20,6 +20,17 @@ export interface CardRecommendation {
   benefitsUrl: string | null;
 }
 
+export interface CardProtection {
+  cardId: number;
+  cardName: string;
+  issuer: string;
+  color: string;
+  protectionType: 'car_rental_insurance' | 'extended_warranty';
+  coverageDetails: string;
+  notes: string | null;
+  benefitsUrl: string | null;
+}
+
 export interface MerchantMatch {
   merchantId: number | null;
   merchantName: string;
@@ -131,7 +142,52 @@ export async function getRecommendations(cardIds: number[], merchantQuery: strin
   }
 
   results.sort((a, b) => b.effectiveRate - a.effectiveRate);
-  return { recommendations: results, merchant };
+
+  // Fetch relevant protections based on category
+  const protections: CardProtection[] = [];
+  const categoryName = merchant.categoryName?.toLowerCase() ?? '';
+  const merchantName = merchant.merchantName?.toLowerCase() ?? '';
+
+  const isCarRental = categoryName.includes('travel') || categoryName.includes('transit') ||
+    merchantName.includes('enterprise') || merchantName.includes('hertz') ||
+    merchantName.includes('avis') || merchantName.includes('budget') ||
+    merchantName.includes('national') || merchantName.includes('alamo') ||
+    merchantName.includes('car rental') || merchantName.includes('rental car');
+
+  const isElectronicsOrAppliance = categoryName.includes('electronics') ||
+    categoryName.includes('home improvement') || categoryName.includes('furniture') ||
+    categoryName.includes('appliance') || categoryName.includes('department') ||
+    merchantName.includes('best buy') || merchantName.includes('apple') ||
+    merchantName.includes('costco') || merchantName.includes('home depot') ||
+    merchantName.includes('lowes') || merchantName.includes('walmart') ||
+    merchantName.includes('target') || merchantName.includes('samsung') ||
+    merchantName.includes('amazon');
+
+  const protectionType = isCarRental ? 'car_rental_insurance' : isElectronicsOrAppliance ? 'extended_warranty' : null;
+
+  if (protectionType && cardIds.length) {
+    const rows = await sql`
+      SELECT cp.*, c.name as card_name, c.issuer, c.color, c.benefits_url
+      FROM card_protections cp
+      JOIN cards c ON c.id = cp.card_id
+      WHERE cp.card_id = ANY(${cardIds}::int[]) AND cp.protection_type = ${protectionType}
+      ORDER BY c.issuer, c.name
+    `;
+    for (const r of rows) {
+      protections.push({
+        cardId: r.card_id,
+        cardName: r.card_name,
+        issuer: r.issuer,
+        color: r.color,
+        protectionType: r.protection_type,
+        coverageDetails: r.coverage_details,
+        notes: r.notes,
+        benefitsUrl: r.benefits_url,
+      });
+    }
+  }
+
+  return { recommendations: results, merchant, protections };
 }
 
 export async function getAllCards() {

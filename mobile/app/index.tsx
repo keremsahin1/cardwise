@@ -6,7 +6,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { fetchCards, fetchCategories, searchMerchants, getRecommendations, fetchUserCards, saveUserCard, deleteUserCard } from '../lib/api';
-import type { Card, Merchant, Category, Recommendation, MerchantMatch } from '../lib/api';
+import type { Card, Merchant, Category, Recommendation, MerchantMatch, Protection } from '../lib/api';
 import { configureGoogleSignIn, signInWithGoogle, signOutGoogle, loadUser } from '../lib/auth';
 import type { User } from '../lib/auth';
 
@@ -28,6 +28,7 @@ export default function HomeScreen() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
+  const [protections, setProtections] = useState<Protection[] | null>(null);
   const [merchantMatch, setMerchantMatch] = useState<MerchantMatch | null>(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -108,6 +109,7 @@ export default function HomeScreen() {
         setRecommendations(null);
       } else {
         setRecommendations(data.recommendations);
+        setProtections(data.protections ?? []);
       }
     } catch {
       Alert.alert('Error', 'Could not fetch recommendations. Check your connection.');
@@ -154,7 +156,7 @@ export default function HomeScreen() {
                     cancelButtonIndex: 1,
                   },
                   idx => {
-                    if (idx === 0) signOutGoogle().then(() => { setUser(null); setSelectedCards([]); setRecommendations(null); setMerchantQuery(''); });
+                    if (idx === 0) signOutGoogle().then(() => { setUser(null); setSelectedCards([]); setRecommendations(null); setProtections(null); setMerchantQuery(''); });
                   }
                 );
               }}
@@ -233,6 +235,7 @@ export default function HomeScreen() {
             setMerchantQuery(t);
             setShowMerchantDropdown(true);
             setRecommendations(null);
+            setProtections(null);
             setShowCategoryPicker(false);
           }}
           onFocus={() => { setShowCardDropdown(false); setShowMerchantDropdown(true); }}
@@ -359,6 +362,30 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {/* Protections section */}
+        {protections && protections.length > 0 && (
+          <View style={{ marginHorizontal: 20, marginTop: 24 }}>
+            <Text style={s.protectionsHeader}>
+              {protections[0].protectionType === 'car_rental_insurance' ? '🚗 Car Rental Insurance' : '🛡️ Extended Warranty'}
+            </Text>
+            {protections.map(p => (
+              <View key={p.cardId} style={s.protectionCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <View style={[s.protectionBar, { backgroundColor: p.color }]} />
+                  <Text style={s.protectionName}>{p.cardName}</Text>
+                </View>
+                <Text style={s.protectionDetails}>{p.coverageDetails}</Text>
+                {p.notes && <Text style={s.protectionNotes}>ℹ️ {p.notes}</Text>}
+                {p.benefitsUrl && (
+                  <TouchableOpacity onPress={() => Linking.openURL(p.benefitsUrl!)}>
+                    <Text style={s.benefitsLink}>🔗 View card benefits</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Empty state */}
         {recommendations?.length === 0 && (
           <Text style={s.emptyState}>No matching benefits found. Try a different store name or category.</Text>
@@ -472,4 +499,10 @@ const s = StyleSheet.create({
   disclaimerText: { color: '#64748b', fontSize: 11, lineHeight: 16 },
   emptyState: { textAlign: 'center', color: '#64748b', fontSize: 13, marginTop: 32, marginHorizontal: 20 },
   footer: { textAlign: 'center', color: '#334155', fontSize: 11, marginTop: 24, marginHorizontal: 20 },
+  protectionsHeader: { color: '#94a3b8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  protectionCard: { backgroundColor: '#1e293b', borderRadius: 12, borderWidth: 1, borderColor: '#334155', padding: 12, marginBottom: 8 },
+  protectionBar: { width: 4, height: 16, borderRadius: 2 },
+  protectionName: { color: '#f1f5f9', fontSize: 13, fontWeight: '600', flex: 1 },
+  protectionDetails: { color: '#cbd5e1', fontSize: 12, marginLeft: 12, marginBottom: 2 },
+  protectionNotes: { color: '#64748b', fontSize: 11, marginLeft: 12, marginTop: 2 },
 });

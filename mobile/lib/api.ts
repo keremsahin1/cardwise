@@ -51,6 +51,17 @@ export interface MerchantMatch {
   isOnline: boolean;
 }
 
+export interface Protection {
+  cardId: number;
+  cardName: string;
+  issuer: string;
+  color: string;
+  protectionType: 'car_rental_insurance' | 'extended_warranty';
+  coverageDetails: string;
+  notes: string | null;
+  benefitsUrl: string | null;
+}
+
 export async function fetchCards(): Promise<Card[]> {
   const res = await fetch(`${BASE_URL}/api/cards`);
   return res.json();

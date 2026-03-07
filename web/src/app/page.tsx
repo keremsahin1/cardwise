@@ -48,6 +48,17 @@ interface MerchantMatch {
   isOnline: boolean;
 }
 
+interface Protection {
+  cardId: number;
+  cardName: string;
+  issuer: string;
+  color: string;
+  protectionType: 'car_rental_insurance' | 'extended_warranty';
+  coverageDetails: string;
+  notes: string | null;
+  benefitsUrl: string | null;
+}
+
 interface Merchant {
   id: number;
   name: string;
@@ -66,6 +77,7 @@ export default function Home() {
   const [merchantSuggestions, setMerchantSuggestions] = useState<Merchant[]>([]);
   const [showMerchantDropdown, setShowMerchantDropdown] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
+  const [protections, setProtections] = useState<Protection[] | null>(null);
   const [merchantMatch, setMerchantMatch] = useState<MerchantMatch | null>(null);
   const [loading, setLoading] = useState(false);
   const [embeddedBrowser, setEmbeddedBrowser] = useState(false);
@@ -139,6 +151,7 @@ export default function Home() {
   const removeCard = async (id: number) => {
     setSelectedCards(p => p.filter(c => c.id !== id));
     setRecommendations(null);
+    setProtections(null);
     if (session?.user) {
       await fetch('/api/user/cards', {
         method: 'DELETE',
@@ -164,6 +177,7 @@ export default function Home() {
       });
       const data = await res.json();
       setRecommendations(data.recommendations);
+      setProtections(data.protections ?? []);
       setMerchantMatch(data.merchant);
       // If merchant not found in DB, prompt for category (unless already provided)
       if (!data.merchant.merchantId && overrideCategoryId == null && !selectedCategoryId) {
@@ -337,7 +351,7 @@ export default function Home() {
                 className="bg-transparent outline-none text-sm w-full placeholder-slate-500"
                 placeholder="e.g. Amazon, Costco, Nike, Starbucks..."
                 value={merchantQuery}
-                onChange={e => { setMerchantQuery(e.target.value); setShowMerchantDropdown(true); setRecommendations(null); setShowCategoryPicker(false); setSelectedCategoryId(null); }}
+                onChange={e => { setMerchantQuery(e.target.value); setShowMerchantDropdown(true); setRecommendations(null); setProtections(null); setShowCategoryPicker(false); setSelectedCategoryId(null); }}
                 onFocus={() => setShowMerchantDropdown(true)}
                 onKeyDown={e => { if (e.key === 'Enter') { setShowMerchantDropdown(false); getRecommendations(); } }}
               />
@@ -494,6 +508,33 @@ export default function Home() {
         {recommendations && recommendations.length > 0 && recommendations.some(r => r.rewardType === 'points') && (
           <div className="mt-4 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-500">
             💡 Points value estimated using industry-standard valuations (Chase UR: 2¢, Amex MR: 2¢, Capital One: 1.85¢). Actual value varies by redemption method.
+          </div>
+        )}
+
+        {/* Protections section */}
+        {protections && protections.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              {protections[0].protectionType === 'car_rental_insurance' ? '🚗 Car Rental Insurance' : '🛡️ Extended Warranty'}
+            </h2>
+            <div className="space-y-2">
+              {protections.map((p) => (
+                <div key={p.cardId} className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1 h-4 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                    <span className="text-sm font-medium">{p.cardName}</span>
+                  </div>
+                  <p className="text-xs text-slate-300 ml-3">{p.coverageDetails}</p>
+                  {p.notes && <p className="text-xs text-slate-500 ml-3 mt-0.5">ℹ️ {p.notes}</p>}
+                  {p.benefitsUrl && (
+                    <a href={p.benefitsUrl} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-indigo-400 transition-colors ml-3 mt-1">
+                      <ExternalLink className="w-3 h-3" /> View card benefits
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
